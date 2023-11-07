@@ -10,10 +10,7 @@ const postSchema = new mongoose.Schema(
       type: String,
       required: [true, "Content is required."],
     },
-    imageUrl: {
-      type: String,
-      required: [true, "Image URL is required."],
-    },
+    imageUrl: String,
     creator: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

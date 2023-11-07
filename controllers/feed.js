@@ -15,7 +15,7 @@ exports.getPosts = (req, res, next) => {
     });
 };
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const error = new Error("Validation failed.");
@@ -26,23 +26,43 @@ exports.createPost = (req, res, next) => {
 
   const { title, content } = req.body;
 
-  const post = new Post({
-    title,
-    content,
-    imageUrl: "images/duck.jpg",
-  });
+  try {
+    let imageUrl;
+    if (req.file) {
+      imageUrl = req.file.path.replace("\\", "/");
+    }
 
-  post
-    .save()
-    .then((result) => {
-      console.log(result);
-      res.status(201).json({
-        message: "Post created successfully!",
-        post: result,
-      });
-    })
-    .catch((err) => {
-      if (!err.statusCode) err.statusCode = 500;
-      next(err);
+    const post = new Post({
+      title,
+      content,
+      imageUrl,
     });
+
+    await post.save();
+
+    res.status(201).json({
+      message: "Post created successfully!",
+      post,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getPostById = async (req, res, next) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      const error = new Error("Could not find post.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    res.status(200).json({ post });
+  } catch (error) {
+    next(error);
+  }
 };
