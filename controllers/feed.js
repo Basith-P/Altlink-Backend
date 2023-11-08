@@ -5,17 +5,28 @@ const { validationResult } = require("express-validator");
 const Post = require("../models/post");
 const path = require("path");
 
-exports.getPosts = (req, res, next) => {
-  Post.find()
-    .then((posts) => {
-      res.status(200).json({
-        message: "Fetched posts successfully.",
-        posts,
-      });
-    })
-    .catch((err) => {
-      console.log(err);
+exports.getPosts = async (req, res, next) => {
+  const currentPage = req.query.page || 1;
+  const perPage = req.query.perPage || 5;
+  console.log(currentPage);
+
+  try {
+    const totalItems = await Post.find().countDocuments();
+
+    const posts = await Post.find()
+      .skip((currentPage - 1) * perPage)
+      .limit(perPage);
+    const hasMore = totalItems > currentPage * perPage;
+    res.status(200).json({
+      message: "Fetched posts successfully.",
+      posts,
+      totalItems,
+      hasMore,
     });
+  } catch (error) {
+    console.log(error);
+    next(error);
+  }
 };
 
 exports.createPost = async (req, res, next) => {
