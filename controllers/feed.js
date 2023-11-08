@@ -1,6 +1,9 @@
+const fs = require("fs");
+
 const { validationResult } = require("express-validator");
 
 const Post = require("../models/post");
+const path = require("path");
 
 exports.getPosts = (req, res, next) => {
   Post.find()
@@ -50,6 +53,13 @@ exports.createPost = async (req, res, next) => {
 };
 
 exports.getPostById = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new Error("Validation failed.");
+    error.statusCode = 422;
+    throw error;
+  }
+
   const { id } = req.params;
 
   try {
@@ -65,4 +75,38 @@ exports.getPostById = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.updatePost = async (req, res, next) => {
+  const { id } = req.params;
+  const { title, content } = req.body;
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      const error = new Error("Could not find post.");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    if (req.file) {
+      clearImage(post.imageUrl);
+      post.imageUrl = req.file.path.replace("\\", "/");
+    }
+
+    if (title) post.title = title;
+    if (content) post.content = content;
+
+    await post.save();
+
+    res.status(200).json({ post, message: "Post updated!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const clearImage = (filePath) => {
+  filePath = path.join(__dirname, "..", filePath);
+  fs.unlink(filePath, (err) => console.log(err));
 };
