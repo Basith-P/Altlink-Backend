@@ -8,7 +8,8 @@ const { v4: uuidv4 } = require("uuid");
 
 require("dotenv").config();
 
-const feedRoutes = require("./routes/feed");
+const feedRouter = require("./routes/feed");
+const userRouter = require("./routes/user");
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -34,11 +35,13 @@ app.use(multer({ storage, fileFilter }).single("image"));
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 /// Routes
-app.use("/feed", feedRoutes);
+app.use("/feed", feedRouter);
+app.use("/user", userRouter);
 
 /// Error Handling Middleware
 app.use((error, req, res, next) => {
-  console.log(error);
+  console.log("Server Error:", error);
+
   const { statusCode, message, data } = error;
   res.status(statusCode || 500).json({ message, data });
 });
