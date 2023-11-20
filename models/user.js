@@ -7,6 +7,7 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    password: String,
     name: {
       type: String,
       required: true,
@@ -24,6 +25,12 @@ const userSchema = new Schema(
   },
   {
     timestamps: true,
+    toJSON: {
+      transform: (doc, ret) => {
+        delete ret.password;
+        return ret;
+      },
+    },
   }
 );
 

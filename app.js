@@ -2,14 +2,17 @@ const path = require("path");
 
 const express = require("express");
 const cors = require("cors");
-const mongoose = require("mongoose");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 
 require("dotenv").config();
 
+require("./config/database").connect();
+
+const isAuth = require("./middleware/is-auth");
+
 const feedRouter = require("./routes/feed");
-const userRouter = require("./routes/user");
+const authRouter = require("./routes/auth");
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -35,8 +38,8 @@ app.use(multer({ storage, fileFilter }).single("image"));
 app.use("/images", express.static(path.join(__dirname, "images")));
 
 /// Routes
-app.use("/feed", feedRouter);
-app.use("/user", userRouter);
+app.use("/feed", isAuth, feedRouter);
+app.use("/auth", authRouter);
 
 /// Error Handling Middleware
 app.use((error, req, res, next) => {
@@ -45,10 +48,5 @@ app.use((error, req, res, next) => {
   const { statusCode, message, data } = error;
   res.status(statusCode || 500).json({ message, data });
 });
-
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("Connected to MongoDB."))
-  .catch((err) => console.log(err));
 
 app.listen(port, () => console.log(`Listening on port ${port}.`));
